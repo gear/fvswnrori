@@ -5,7 +5,7 @@ import pickle as pkl
 
 
 def load_adj_data(config):
-    """Load and return sparse adjacency matrix representation for a dataset. 
+    """Load and return sparse adjacency matrix representation for a dataset.
     Other properties such as features are the same as other load methods.
     """
     dataset_name = config['dataset']
@@ -24,10 +24,20 @@ def load_adj_data(config):
 
     edge_list = list(nx_graph.edges())
     if not nx_graph.is_directed():
-        edge_list.extend([(j,i) for (i,j) in el])
+        edge_list.extend([(j,i) for (i,j) in edge_list])
 
     data = torch.ones(len(edge_list))
     idx = torch.LongTensor([*zip(*edge_list)])
     shape = (nx_graph.number_of_nodes(), nx_graph.number_of_nodes())
-    adj = torch.sparse.FloatTensor(idx, data, torch.Size(shape))
+    adj = torch.sparse.FloatTensor(idx, data, torch.Size(shape)).to(device)
 
+    features = torch.FloatTensor(features).to(device)
+    if config['multilabels']:
+        labels = torch.FloatTensor(labels).to(device)
+    else:
+        labels = torch.LongTensor(labels).to(device)
+    train_idx = torch.LongTensor(splits['train']).to(device)
+    val_idx = torch.LongTensor(splits['valid']).to(device)
+    test_idx = torch.LongTensor(splits['test']).to(device)
+
+    return adj, features, labels, adj, train_idx, val_idx, test_idx
